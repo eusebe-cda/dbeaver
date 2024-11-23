@@ -81,6 +81,67 @@ public class SQLiteMetaModel extends GenericMetaModel implements DBCQueryTransfo
     }
 
     @Override
+    public JDBCStatement prepareTableLoadStatement(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @Nullable GenericTableBase object, @Nullable String objectName) throws SQLException {
+        String sql =
+            "SELECT" + "\n" +
+            "  NULL AS TABLE_CAT," + "\n" +
+            "  NULL AS TABLE_SCHEM," + "\n" +
+            "  TABLES.NAME AS TABLE_NAME," + "\n" +
+            "  TABLES.TYPE AS TABLE_TYPE," + "\n" +
+            "  NULL AS REMARKS," + "\n" +
+            "  NULL AS TYPE_CAT," + "\n" +
+            "  NULL AS TYPE_SCHEM," + "\n" +
+            "  NULL AS TYPE_NAME," + "\n" +
+            "  NULL AS SELF_REFERENCING_COL_NAME," + "\n" +
+            "  NULL AS REF_GENERATION," + "\n" +
+            "  INFOS.STRICT AS STRICT" + "\n" +
+            "FROM" + "\n" +
+            "  (" + "\n" +
+            "    SELECT" + "\n" +
+            "      'sqlite_schema' AS NAME," + "\n" +
+            "      'SYSTEM TABLE' AS TYPE" + "\n" +
+            "    UNION ALL" + "\n" +
+            "    SELECT" + "\n" +
+            "      NAME," + "\n" +
+            "      UPPER(TYPE) AS TYPE" + "\n" +
+            "    FROM" + "\n" +
+            "      sqlite_schema" + "\n" +
+            "    WHERE" + "\n" +
+            "      NAME NOT LIKE 'sqlite\\_%' ESCAPE '\\'" + "\n" +
+            "      AND UPPER(TYPE) IN ('TABLE', 'VIEW')" + "\n" +
+            "    UNION ALL" + "\n" +
+            "    SELECT" + "\n" +
+            "      NAME," + "\n" +
+            "      'GLOBAL TEMPORARY' AS TYPE" + "\n" +
+            "    FROM" + "\n" +
+            "      sqlite_temp_master" + "\n" +
+            "    UNION ALL" + "\n" +
+            "    SELECT" + "\n" +
+            "      NAME," + "\n" +
+            "      'SYSTEM TABLE' AS TYPE" + "\n" +
+            "    FROM" + "\n" +
+            "      sqlite_schema" + "\n" +
+            "    WHERE" + "\n" +
+            "      NAME LIKE 'sqlite\\_%' ESCAPE '\\'" + "\n" +
+            "  ) AS TABLES" + "\n" +
+            "  LEFT OUTER JOIN pragma_table_list AS INFOS" + "\n" +
+            "    ON INFOS.NAME = TABLES.NAME" + "\n";
+
+        if (object == null && objectName == null) {
+            sql += "ORDER BY TABLE_TYPE, TABLE_NAME";
+        } else {
+            sql += "WHERE TABLE_NAME = ?";
+        }
+
+        JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+        if (object != null || objectName != null) {
+            dbStat.setString(1, (object != null ? object.getName() : objectName));
+        }
+
+        return dbStat;
+    }
+
+    @Override
     public String getTriggerDDL(@NotNull DBRProgressMonitor monitor, @NotNull GenericTrigger trigger) throws DBException {
         return SQLiteUtils.readMasterDefinition(monitor, trigger, SQLiteObjectType.trigger, trigger.getName(), (GenericTableBase) trigger.getParentObject());
     }
