@@ -107,11 +107,8 @@ public class SQLiteTableManager extends GenericTableManager implements DBEObject
         StringBuilder ddl,
         boolean alter
     ) {
-        if (table instanceof SQLiteTable) {
-            SQLiteTable sqliteTable = (SQLiteTable) table;
-            if (sqliteTable.isHasStrictTyping()) {
-                ddl.append(" STRICT"); //$NON-NLS-1$
-            }
+        if (table instanceof SQLiteTable sqliteTable && sqliteTable.isHasStrictTyping()) {
+            ddl.append(" STRICT"); //$NON-NLS-1$
         }
     }
 }

@@ -75,11 +75,7 @@ public class SQLiteTable extends GenericTable implements DBDPseudoAttributeConta
 
     public SQLiteTable(GenericStructContainer container, @Nullable String tableName, @Nullable String tableType, @Nullable JDBCResultSet dbResult) {
         super(container, tableName, tableType, dbResult);
-        if(dbResult != null) {
-            hasStrictTyping = JDBCUtils.safeGetBoolean(dbResult, "STRICT");
-        } else {
-            hasStrictTyping = false;
-        }
+        hasStrictTyping = dbResult != null && JDBCUtils.safeGetBoolean(dbResult, "STRICT"); //$NON-NLS-1$
     }
 
     @Override
