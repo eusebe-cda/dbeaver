@@ -72,6 +72,7 @@ public abstract class PostgreAttribute<OWNER extends DBSEntity & PostgreObject> 
     @Nullable
     private boolean isGeneratedColumn;
     private long depObjectId;
+    private PostgreAttributeStorage storage;
 
     protected PostgreAttribute(
         OWNER table)
@@ -110,6 +111,7 @@ public abstract class PostgreAttribute<OWNER extends DBSEntity & PostgreObject> 
         this.typeId = source.typeId;
         this.typeMod = source.typeMod;
         this.defaultValue = source.defaultValue;
+        this.storage = source.storage;
     }
 
     @NotNull
@@ -180,6 +182,7 @@ public abstract class PostgreAttribute<OWNER extends DBSEntity & PostgreObject> 
         this.isLocal =
             !serverType.supportsInheritance() ||
             JDBCUtils.safeGetBoolean(dbResult, "attislocal", true);
+        this.storage = PostgreAttributeStorage.getByCode(JDBCUtils.safeGetString(dbResult, "attstorage"));
 
         if (dataSource.isServerVersionAtLeast(10, 0)) {
             String identityStr = JDBCUtils.safeGetString(dbResult, "attidentity");
@@ -345,6 +348,18 @@ public abstract class PostgreAttribute<OWNER extends DBSEntity & PostgreObject> 
             return defaultValue;
         }
         return null;
+    }
+
+    @Nullable
+    @Property(order = 85, editableExpr = "!object.table.view", updatableExpr = "!object.table.view", listProvider = StorageListProvider.class)
+    public PostgreAttributeStorage getStorage()
+    {
+        return this.storage;
+    }
+
+    public void setStorage(PostgreAttributeStorage storage)
+    {
+        this.storage = storage;
     }
 
     public long getTypeId() {
@@ -527,6 +542,18 @@ public abstract class PostgreAttribute<OWNER extends DBSEntity & PostgreObject> 
                 log.error(e);
                 return new Object[0];
             }
+        }
+    }
+
+    public static class StorageListProvider implements IPropertyValueListProvider<PostgreAttribute> {
+        @Override
+        public boolean allowCustomValue() {
+            return false;
+        }
+
+        @Override
+        public Object[] getPossibleValues(PostgreAttribute object) {
+            return PostgreAttributeStorage.values();
         }
     }
 

@@ -75,6 +75,14 @@ public class PostgreTableColumnManager extends SQLTableColumnManager<PostgreTabl
         }
     };
 
+    protected final ColumnModifier<PostgreTableColumn> PostgreStorageModifier = (monitor, column, sql, command) -> {
+        PostgreAttributeStorage storage = column.getStorage();
+        if(storage != null) {
+            sql.append(" STORAGE ");
+            sql.append(column.getStorage());
+        }
+    };
+
     protected final ColumnModifier<PostgreTableColumn> PostgreDefaultModifier = (monitor, column, sql, command) -> {
         String defaultValue = column.getDefaultValue();
         if (!CommonUtils.isEmpty(defaultValue) && defaultValue.startsWith("nextval")) {
@@ -148,6 +156,7 @@ public class PostgreTableColumnManager extends SQLTableColumnManager<PostgreTabl
     {
         ColumnModifier[] modifiers = {
             PostgreDataTypeModifier,
+            PostgreStorageModifier,
             PostgreDefaultModifier,
             PostgreIdentityModifier,
             PostgreCollateModifier,
@@ -228,6 +237,9 @@ public class PostgreTableColumnManager extends SQLTableColumnManager<PostgreTabl
         }
         if (command.hasProperty(DBConstants.PROP_ID_REQUIRED)) {
             actionList.add(new SQLDatabasePersistActionAtomic("Set column nullability", prefix + (column.isRequired() ? "SET" : "DROP") + " NOT NULL", isAtomic));
+        }
+        if (command.hasProperty("storage") && column.getStorage() != null) {
+            actionList.add(new SQLDatabasePersistActionAtomic("Set column storage", prefix + "SET STORAGE " + column.getStorage(), isAtomic));
         }
 
         if (command.hasProperty(DBConstants.PROP_ID_DEFAULT_VALUE)) {
