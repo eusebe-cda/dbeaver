@@ -79,7 +79,7 @@ public class PostgreTableColumnManager extends SQLTableColumnManager<PostgreTabl
         PostgreAttributeStorage storage = column.getStorage();
         if(storage != null) {
             sql.append(" STORAGE ");
-            sql.append(column.getStorage());
+            sql.append(storage);
         }
     };
 
