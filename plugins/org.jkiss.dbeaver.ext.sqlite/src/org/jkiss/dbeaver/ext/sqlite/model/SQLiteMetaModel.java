@@ -82,50 +82,51 @@ public class SQLiteMetaModel extends GenericMetaModel implements DBCQueryTransfo
 
     @Override
     public JDBCStatement prepareTableLoadStatement(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @Nullable GenericTableBase object, @Nullable String objectName) throws SQLException {
-        String sql =
-            "SELECT" + "\n" +
-            "  NULL AS TABLE_CAT," + "\n" +
-            "  NULL AS TABLE_SCHEM," + "\n" +
-            "  TABLES.NAME AS TABLE_NAME," + "\n" +
-            "  TABLES.TYPE AS TABLE_TYPE," + "\n" +
-            "  NULL AS REMARKS," + "\n" +
-            "  NULL AS TYPE_CAT," + "\n" +
-            "  NULL AS TYPE_SCHEM," + "\n" +
-            "  NULL AS TYPE_NAME," + "\n" +
-            "  NULL AS SELF_REFERENCING_COL_NAME," + "\n" +
-            "  NULL AS REF_GENERATION," + "\n" +
-            "  INFOS.STRICT AS STRICT" + "\n" +
-            "FROM" + "\n" +
-            "  (" + "\n" +
-            "    SELECT" + "\n" +
-            "      'sqlite_schema' AS NAME," + "\n" +
-            "      'SYSTEM TABLE' AS TYPE" + "\n" +
-            "    UNION ALL" + "\n" +
-            "    SELECT" + "\n" +
-            "      NAME," + "\n" +
-            "      UPPER(TYPE) AS TYPE" + "\n" +
-            "    FROM" + "\n" +
-            "      sqlite_schema" + "\n" +
-            "    WHERE" + "\n" +
-            "      NAME NOT LIKE 'sqlite\\_%' ESCAPE '\\'" + "\n" +
-            "      AND UPPER(TYPE) IN ('TABLE', 'VIEW')" + "\n" +
-            "    UNION ALL" + "\n" +
-            "    SELECT" + "\n" +
-            "      NAME," + "\n" +
-            "      'GLOBAL TEMPORARY' AS TYPE" + "\n" +
-            "    FROM" + "\n" +
-            "      sqlite_temp_master" + "\n" +
-            "    UNION ALL" + "\n" +
-            "    SELECT" + "\n" +
-            "      NAME," + "\n" +
-            "      'SYSTEM TABLE' AS TYPE" + "\n" +
-            "    FROM" + "\n" +
-            "      sqlite_schema" + "\n" +
-            "    WHERE" + "\n" +
-            "      NAME LIKE 'sqlite\\_%' ESCAPE '\\'" + "\n" +
-            "  ) AS TABLES" + "\n" +
-            "  LEFT OUTER JOIN pragma_table_list AS INFOS" + "\n" +
-            "    ON INFOS.NAME = TABLES.NAME" + "\n";
+        String sql = """
+            SELECT
+                NULL AS TABLE_CAT,
+                NULL AS TABLE_SCHEM,
+                TABLES.NAME AS TABLE_NAME,
+                TABLES.TYPE AS TABLE_TYPE,
+                NULL AS REMARKS,
+                NULL AS TYPE_CAT,
+                NULL AS TYPE_SCHEM,
+                NULL AS TYPE_NAME,
+                NULL AS SELF_REFERENCING_COL_NAME,
+                NULL AS REF_GENERATION,
+                INFOS.STRICT AS STRICT
+            FROM
+                (
+                SELECT
+                    'sqlite_schema' AS NAME,
+                    'SYSTEM TABLE' AS TYPE
+                UNION ALL
+                SELECT
+                    NAME,
+                    UPPER(TYPE) AS TYPE
+                FROM
+                    sqlite_schema
+                WHERE
+                    NAME NOT LIKE 'sqlite\\_%' ESCAPE '\\'
+                    AND UPPER(TYPE) IN ('TABLE', 'VIEW')
+                UNION ALL
+                SELECT
+                    NAME,
+                    'GLOBAL TEMPORARY' AS TYPE
+                FROM
+                    sqlite_temp_master
+                UNION ALL
+                SELECT
+                    NAME,
+                    'SYSTEM TABLE' AS TYPE
+                FROM
+                    sqlite_schema
+                WHERE
+                    NAME LIKE 'sqlite\\_%' ESCAPE '\\'
+                ) AS TABLES
+                LEFT OUTER JOIN pragma_table_list AS INFOS
+                    ON INFOS.NAME = TABLES.NAME
+            """;
 
         if (object == null && objectName == null) {
             sql += "ORDER BY TABLE_TYPE, TABLE_NAME";
